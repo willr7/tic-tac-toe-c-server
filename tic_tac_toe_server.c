@@ -19,15 +19,12 @@
 int main() {
   int sock_fd, incoming_fd;
   char incoming_address[INET6_ADDRSTRLEN];
-
   char locs[9] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
   bool win = 0;
   bool turn = 0;
-
   char player;
   char player_move[2];
   memset(&player_move, 0, sizeof(player_move));
-
   char board[200] = "Type a number to choose a square\n\n"
                     " 0 | 1 | 2 \n"
                     "---|---|---\n"
