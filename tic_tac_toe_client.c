@@ -56,7 +56,7 @@ int main() {
       perror("failed to receive message");
     }
 
-    printf("%s\n", buffer);
+    printf("%s", buffer);
 
     scanf("%s", response);
 
