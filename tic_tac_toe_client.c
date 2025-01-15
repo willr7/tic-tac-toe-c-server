@@ -15,22 +15,40 @@
 #define PORT "6060"
 #define BACKLOG 10
 
-int main() {
+int main(int argc, char *argv[]) {
   int sockfd;
-  struct sockaddr_storage their_addr;
   struct addrinfo hints, *servinfo, *p;
   struct sigaction sa;
   socklen_t sin_size;
   char s[INET6_ADDRSTRLEN];
   char rv;
   int yes = 1;
-  char response[2];
+  char player_move[2];
+  char win = 0;
+  char turn = 'x';
+  char player;
+  char turn_message[20];
+  char opponent_move[5];
+  char locs[9] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+  int player_move_loc;
+  char player_response[2];
+
+  char *server_address;
+  printf("Connecting to server at: %s:%s\n", argv[1], PORT);
+
+  memset(&player_move, 0, sizeof(player_move));
+  char board[200] = "Type a number to choose a square\n\n"
+                    " 0 | 1 | 2 \n"
+                    "---|---|---\n"
+                    " 3 | 4 | 5 \n"
+                    "---|---|---\n"
+                    " 6 | 7 | 8 \n\n";
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
     return 1;
   }
@@ -50,20 +68,46 @@ int main() {
     break;
   }
 
-  while (1) {
-    char buffer[200];
-    if (recv(sockfd, buffer, sizeof(buffer), 0) == -1) {
-      perror("failed to receive message");
-    }
-
-    printf("%s", buffer);
-
-    scanf("%s", response);
-
-    if (send(sockfd, response, sizeof(char), 0) == -1) {
-      perror("failed to send message");
-    }
+  if (recv(sockfd, &player, sizeof(player), 0) == -1) {
+    perror("failed to receive player");
   }
 
+  snprintf(turn_message, sizeof(turn_message), "player: %c\n", player);
+  strcat(board, turn_message);
+
+  while (!win) {
+    printf("%s", board);
+
+    if (turn == player) {
+
+      printf("Player %c move: \n", player);
+      scanf("%s", player_move);
+
+      player_move_loc = atoi(player_move);
+      bool m = (locs[player_move_loc] == ' ');
+      locs[player_move_loc] = !m * locs[player_move_loc] + m * player;
+
+      if (send(sockfd, locs, sizeof(locs), 0) == -1) {
+        perror("send locs in game loop");
+      }
+    } else {
+      printf("waiting for opponent move...\n");
+      if (recv(sockfd, &locs, sizeof(locs), 0) == -1) {
+        perror("error receiving new turn");
+      }
+      printf("opponent move: \n");
+    }
+    win = checkwin(locs, turn);
+    turn = turn ^ ('x' ^ 'o');
+    memset(&board, 0, sizeof(board));
+    print_board(locs, board, sizeof(board));
+  }
+
+  char win_message[20];
+  snprintf(win_message, sizeof(win_message), "player %c wins!\n", win);
+  strcat(board, win_message);
+  printf("%s", board);
+
   close(sockfd);
+  return 0;
 }

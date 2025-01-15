@@ -61,53 +61,55 @@ void *get_in_addr(struct sockaddr *sa) {
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-int start_server(int *sock_fd, char incoming_address[INET6_ADDRSTRLEN],
-                 char PORT[], int BACKLOG) {
-  struct sockaddr_storage their_addr;
-  struct addrinfo hints, *servinfo;
-  struct sigaction sa;
-  socklen_t sin_size;
-  char s[INET6_ADDRSTRLEN];
-  char rv;
-  int yes = 1;
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
-
-  if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
-  }
-
-  bind_socket(sock_fd, servinfo);
-
-  if (listen(*sock_fd, BACKLOG) == -1) {
-    perror("listen");
-    exit(1);
-  }
-
-  sa.sa_handler = sigchld_handler;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = SA_RESTART;
-  if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-    perror("sigaction");
-    exit(1);
-  }
-
-  printf("listening for connections \n");
-
-  sin_size = sizeof(their_addr);
-  int incoming_fd = accept(*sock_fd, (struct sockaddr *)&their_addr, &sin_size);
-
-  inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr),
-            s, sizeof(s));
-
-  strcpy(incoming_address, s);
-
-  if (incoming_fd == -1) {
-    perror("failed to connect");
-  }
-  return incoming_fd;
-}
+// int start_server(int *sock_fd, char incoming_address[INET6_ADDRSTRLEN],
+//                  char PORT[], int BACKLOG) {
+//   struct sockaddr_storage their_addr;
+//   struct addrinfo hints, *servinfo;
+//   struct sigaction sa;
+//   socklen_t sin_size;
+//   char s[INET6_ADDRSTRLEN];
+//   char rv;
+//   int yes = 1;
+//
+//   memset(&hints, 0, sizeof(hints));
+//   hints.ai_family = AF_UNSPEC;
+//   hints.ai_socktype = SOCK_STREAM;
+//   hints.ai_flags = AI_PASSIVE;
+//
+//   if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+//     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+//     return 1;
+//   }
+//
+//   bind_socket(sock_fd, servinfo);
+//
+//   if (listen(*sock_fd, BACKLOG) == -1) {
+//     perror("listen");
+//     exit(1);
+//   }
+//
+//   sa.sa_handler = sigchld_handler;
+//   sigemptyset(&sa.sa_mask);
+//   sa.sa_flags = SA_RESTART;
+//   if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+//     perror("sigaction");
+//     exit(1);
+//   }
+//
+//   printf("listening for connections \n");
+//
+//   sin_size = sizeof(their_addr);
+//   int incoming_fd = accept(*sock_fd, (struct sockaddr *)&their_addr,
+//   &sin_size);
+//
+//   inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr
+//   *)&their_addr),
+//             s, sizeof(s));
+//
+//   strcpy(incoming_address, s);
+//
+//   if (incoming_fd == -1) {
+//     perror("failed to connect");
+//   }
+//   return incoming_fd;
+// }
