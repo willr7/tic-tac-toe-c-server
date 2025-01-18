@@ -72,6 +72,15 @@ int main(int argc, char *argv[]) {
     perror("failed to receive player");
   }
 
+  printf("Waiting for another player...\n");
+  char new_player_message[50];
+
+  if (recv(sockfd, new_player_message, sizeof(new_player_message), 0) == -1) {
+    perror("failed to receive new player message");
+  }
+
+  printf("%s", new_player_message);
+
   snprintf(turn_message, sizeof(turn_message), "player: %c\n", player);
   strcat(board, turn_message);
 

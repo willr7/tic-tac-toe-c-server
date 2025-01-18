@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/_types/_socklen_t.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -88,6 +89,19 @@ void del_from_pfds(struct pollfd pfds[], int i, int *fd_count) {
 }
 
 int main(void) {
+  // Create listener socket and start listening
+  //
+  // When the listener socket receives a connection from a new socket,
+  // Accept the connection from that socket and add it to the sockets that you
+  // are polling
+  //
+  // Keep a queue of the sockets that join, and pop the sockets from that queue
+  // when you have enough players to start a game (2)
+  //
+  // Keep a queue of all of the buddy queues
+  //
+  // When you receive a message from one of the other sockets (that isn't the
+  // listener), Then you want to send that message to that socket's buddy
   int listener;
 
   int newfd;
@@ -118,12 +132,12 @@ int main(void) {
 
   pfds[0].fd = listener;
   pfds[0].events = POLLIN;
-  // pfds[0].events = POLLIN & POLLOUT;
 
   fd_count = 1;
 
   for (;;) {
     // poll for new events
+    // POLLIN sends a
     int poll_count = poll(pfds, fd_count, -1);
 
     if (poll_count == -1) {
@@ -155,34 +169,85 @@ int main(void) {
           turn = turn ^ ('x' ^ 'o');
 
           if (socket_queue[0] == 0) {
+            // add to queue
+            //  TODO: add functionality to add more than one concurrent game
             socket_queue[0] = newfd;
           } else {
+            // Start Game
             socket_queue[1] = newfd;
 
             socket_pairs[socket_queue[0]] = socket_queue[1];
             socket_pairs[socket_queue[1]] = socket_queue[0];
+
+            // FIX: Change this to IPv6 / fix the IP 0.0.0.0 thing
+            // (if it's even an issue, test on pi)
+            struct sockaddr_in player_1_addr;
+            struct sockaddr_in player_2_addr;
+
+            socklen_t player_1_addr_len = sizeof(player_1_addr);
+            socklen_t player_2_addr_len = sizeof(player_2_addr);
+
+            if (getpeername(socket_queue[0], (struct sockaddr *)&player_1_addr,
+                            &player_1_addr_len)) {
+              perror("getpeername player 1 failed");
+            }
+
+            if (getpeername(socket_queue[1], (struct sockaddr *)&player_2_addr,
+                            &player_2_addr_len)) {
+              perror("getpeername player 2 failed");
+            }
+
+            char player_1_message[50];
+            char player_2_message[50];
+
+            snprintf(player_1_message, sizeof(player_1_message),
+                     "Playing with player at %s\n",
+                     inet_ntop(AF_INET, &player_1_addr.sin_addr, remoteIP,
+                               INET_ADDRSTRLEN));
+
+            snprintf(player_2_message, sizeof(player_2_message),
+                     "Playing with player at %s\n",
+                     inet_ntop(AF_INET, &player_2_addr.sin_addr, remoteIP,
+                               INET_ADDRSTRLEN));
+
+            if (send(socket_queue[0], player_1_message,
+                     sizeof(player_1_message), 0) == -1) {
+              perror("send player joined message error");
+            }
+
+            if (send(socket_queue[1], player_2_message,
+                     sizeof(player_2_message), 0) == -1) {
+              perror("send player joined message error");
+            }
+
             socket_queue[0] = 0;
             socket_queue[1] = 0;
+            // END Start Game
           }
         } else {
-          if (socket_pairs[pfds[i].fd] != 0) {
-            int nbytes = recv(pfds[i].fd, buf, sizeof(buf), 0);
-            int sender_fd = pfds[i].fd;
+          int nbytes = recv(pfds[i].fd, buf, sizeof(buf), 0);
+          int sender_fd = pfds[i].fd;
 
-            if (nbytes <= 0) {
-              if (nbytes == 0) {
-                printf("pollserver: socket %d hung up\n", sender_fd);
-              } else {
-                perror("recv");
-              }
-              close(pfds[i].fd);
-              del_from_pfds(pfds, i, &fd_count);
+          if (nbytes <= 0) {
+            if (nbytes == 0) {
+              printf("pollserver: socket %d hung up\n", sender_fd);
             } else {
-              int dest_fd = socket_pairs[pfds[i].fd];
-              if (dest_fd != listener && dest_fd != sender_fd) {
-                if (send(dest_fd, buf, nbytes, 0) == -1) {
-                  perror("send");
-                }
+              perror("recv");
+            }
+
+            int socket_buddy = socket_pairs[pfds[i].fd];
+
+            close(pfds[i].fd);
+
+            socket_pairs[socket_buddy] = 0;
+            socket_pairs[pfds[i].fd] = 0;
+
+            del_from_pfds(pfds, i, &fd_count);
+          } else {
+            int dest_fd = socket_pairs[pfds[i].fd];
+            if (dest_fd != listener && dest_fd != sender_fd) {
+              if (send(dest_fd, buf, nbytes, 0) == -1) {
+                perror("send");
               }
             }
           }
