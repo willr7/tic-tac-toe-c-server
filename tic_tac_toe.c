@@ -27,33 +27,31 @@ void move(char locs[9], bool *turn) {
 }
 
 char checkwin(char locs[9], bool turn) {
-  char player = 'x' * turn + 'o' * !(turn);
   char winner;
-  winner =
-      // horizontals
-      ((locs[0] == 'o') * (locs[1] == 'o') * (locs[2] == 'o') +
-       (locs[3] == 'o') * (locs[4] == 'o') * (locs[5] == 'o') +
-       (locs[6] == 'o') * (locs[7] == 'o') * (locs[8] == 'o') +
-       // verticals
-       (locs[0] == 'o') * (locs[3] == 'o') * (locs[6] == 'o') +
-       (locs[1] == 'o') * (locs[4] == 'o') * (locs[7] == 'o') +
-       (locs[2] == 'o') * (locs[5] == 'o') * (locs[8] == 'o') +
-       // diagonals
-       (locs[0] == 'o') * (locs[4] == 'o') * (locs[8] == 'o') +
-       (locs[2] == 'o') * (locs[4] == 'o') * (locs[6] == 'o')) *
-          'o' +
-      // horizontals
-      ((locs[0] == 'x') * (locs[1] == 'x') * (locs[2] == 'x') +
-       (locs[3] == 'x') * (locs[4] == 'x') * (locs[5] == 'x') +
-       (locs[6] == 'x') * (locs[7] == 'x') * (locs[8] == 'x') +
-       // verticals
-       (locs[0] == 'x') * (locs[3] == 'x') * (locs[6] == 'x') +
-       (locs[1] == 'x') * (locs[4] == 'x') * (locs[7] == 'x') +
-       (locs[2] == 'x') * (locs[5] == 'x') * (locs[8] == 'x') +
-       // diagonals
-       (locs[0] == 'x') * (locs[4] == 'x') * (locs[8] == 'x') +
-       (locs[2] == 'x') * (locs[4] == 'x') * (locs[6] == 'x')) *
-          'x';
+
+  char x_won = (locs[0] == 'x') * (locs[1] == 'x') * (locs[2] == 'x') +
+               (locs[3] == 'x') * (locs[4] == 'x') * (locs[5] == 'x') +
+               (locs[6] == 'x') * (locs[7] == 'x') * (locs[8] == 'x') +
+               // verticals
+               (locs[0] == 'x') * (locs[3] == 'x') * (locs[6] == 'x') +
+               (locs[1] == 'x') * (locs[4] == 'x') * (locs[7] == 'x') +
+               (locs[2] == 'x') * (locs[5] == 'x') * (locs[8] == 'x') +
+               // diagonals
+               (locs[0] == 'x') * (locs[4] == 'x') * (locs[8] == 'x') +
+               (locs[2] == 'x') * (locs[4] == 'x') * (locs[6] == 'x');
+
+  bool o_won = (locs[0] == 'o') * (locs[1] == 'o') * (locs[2] == 'o') +
+               (locs[3] == 'o') * (locs[4] == 'o') * (locs[5] == 'o') +
+               (locs[6] == 'o') * (locs[7] == 'o') * (locs[8] == 'o') +
+               // verticals
+               (locs[0] == 'o') * (locs[3] == 'o') * (locs[6] == 'o') +
+               (locs[1] == 'o') * (locs[4] == 'o') * (locs[7] == 'o') +
+               (locs[2] == 'o') * (locs[5] == 'o') * (locs[8] == 'o') +
+               // diagonals
+               (locs[0] == 'o') * (locs[4] == 'o') * (locs[8] == 'o') +
+               (locs[2] == 'o') * (locs[4] == 'o') * (locs[6] == 'o');
+
+  winner = x_won * 'x' + o_won * 'o' + (!x_won & !o_won) * 'n';
 
   return winner;
 }
