@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   char rv;
   int yes = 1;
   char player_move[2];
-  char win = 0;
+  char win = 'n';
   char turn = 'x';
   char player;
   char turn_message[20];
@@ -32,6 +32,8 @@ int main(int argc, char *argv[]) {
   char locs[9] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
   int player_move_loc;
   char player_response[2];
+  int num_possible_moves = 9;
+  int possible_moves[9];
 
   char *server_address;
   printf("Connecting to server at: %s:%s\n", argv[1], PORT);
@@ -84,13 +86,13 @@ int main(int argc, char *argv[]) {
   snprintf(turn_message, sizeof(turn_message), "player: %c\n", player);
   strcat(board, turn_message);
 
-  while (!win) {
+  while (win == 'n' & num_possible_moves != 0) {
     printf("%s", board);
 
     if (turn == player) {
-
       printf("Player %c move: \n", player);
       scanf("%s", player_move);
+      memset(&player_move, 0, sizeof(player_move));
 
       player_move_loc = atoi(player_move);
       bool m = (locs[player_move_loc] == ' ');
@@ -110,10 +112,17 @@ int main(int argc, char *argv[]) {
     turn = turn ^ ('x' ^ 'o');
     memset(&board, 0, sizeof(board));
     print_board(locs, board, sizeof(board));
+    printf("win: %c\n", win);
+    num_possible_moves = get_possible_moves(possible_moves, locs);
+    printf("num_possible_moves: %d\n", num_possible_moves);
+    printf("while loop condition: %d\n", win == 'n' & num_possible_moves != 0);
   }
 
   char win_message[20];
-  snprintf(win_message, sizeof(win_message), "player %c wins!\n", win);
+  if (win != 'n')
+    snprintf(win_message, sizeof(win_message), "Player %c wins!\n", win);
+  else
+    snprintf(win_message, sizeof(win_message), "Tie!\n");
   strcat(board, win_message);
   printf("%s", board);
 

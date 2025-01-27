@@ -26,6 +26,27 @@ void move(char locs[9], bool *turn) {
   locs[player_move] = !m * locs[player_move] + m * player;
 }
 
+int get_possible_moves(int *possible_moves, char *locs) {
+  // changes possible moves in place and returns the number of possible moves
+  int curr = 0;
+  for (int i = 0; i < 9; i++) {
+    if (locs[i] == ' ') {
+      possible_moves[curr] = i;
+      curr += 1;
+    }
+  }
+  return curr;
+}
+
+int is_in_list(int move, int *possible_moves) {
+  for (int i = 0; i < 9; i++) {
+    if (possible_moves[i] == move) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 char checkwin(char locs[9], bool turn) {
   char winner;
 

@@ -3,18 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int get_possible_moves(int *possible_moves, char *locs) {
-  // changes possible moves in place and returns the number of possible moves
-  int curr = 0;
-  for (int i = 0; i < 9; i++) {
-    if (locs[i] == ' ') {
-      possible_moves[curr] = i;
-      curr += 1;
-    }
-  }
-  return curr;
-}
-
 int evaluate_board(char *locs, char player, int current_eval) {
   // calculate the best move given a string of locations and a player
   // this function is recursive, so start with base case
