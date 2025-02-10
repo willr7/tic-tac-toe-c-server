@@ -61,6 +61,11 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      perror("setsockopt");
+      exit(1);
+    }
+
     if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
       close(sockfd);
       perror("client: connect");
@@ -92,15 +97,15 @@ int main(int argc, char *argv[]) {
     if (turn == player) {
       printf("Player %c move: \n", player);
       scanf("%s", player_move);
-      memset(&player_move, 0, sizeof(player_move));
 
       player_move_loc = atoi(player_move);
-      bool m = (locs[player_move_loc] == ' ');
+      bool m = locs[player_move_loc] == ' ';
       locs[player_move_loc] = !m * locs[player_move_loc] + m * player;
 
       if (send(sockfd, locs, sizeof(locs), 0) == -1) {
         perror("send locs in game loop");
       }
+
     } else {
       printf("waiting for opponent move...\n");
       if (recv(sockfd, &locs, sizeof(locs), 0) == -1) {
@@ -108,14 +113,12 @@ int main(int argc, char *argv[]) {
       }
       printf("opponent move: \n");
     }
+
     win = checkwin(locs, turn);
     turn = turn ^ ('x' ^ 'o');
     memset(&board, 0, sizeof(board));
     print_board(locs, board, sizeof(board));
-    printf("win: %c\n", win);
     num_possible_moves = get_possible_moves(possible_moves, locs);
-    printf("num_possible_moves: %d\n", num_possible_moves);
-    printf("while loop condition: %d\n", win == 'n' & num_possible_moves != 0);
   }
 
   char win_message[20];
